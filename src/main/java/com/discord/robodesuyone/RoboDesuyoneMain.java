@@ -8,8 +8,9 @@ import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.util.DiscordException;
 
 /**
- * Hello world!
- *
+ * Main class for the bot
+ * Main must be run for the bot to be alive
+ * Where listeners are registered
  */
 public class RoboDesuyoneMain {
 	static IDiscordClient client;

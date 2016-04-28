@@ -8,6 +8,10 @@ import sx.blah.discord.util.MissingPermissionsException;
 
 public class GuildEventListener implements IListener<GuildCreateEvent>{
 
+	/* 
+	 * Method that's ran when the guild and channels populate for the bot
+	 * 
+	 */
 	@Override
 	public void handle(GuildCreateEvent event) {
 		try {
