@@ -1,6 +1,7 @@
 package com.discord.robodesuyone;
 
 import com.discord.rebodesuyone.listeners.GuildEventListener;
+import com.discord.rebodesuyone.listeners.MessageEventListener;
 import com.discord.rebodesuyone.listeners.ReadyEventListener;
 
 import sx.blah.discord.api.ClientBuilder;
@@ -30,5 +31,6 @@ public class RoboDesuyoneMain {
 		// register listeners
 		client.getDispatcher().registerListener(new ReadyEventListener());
 		client.getDispatcher().registerListener(new GuildEventListener());
+		client.getDispatcher().registerListener(new MessageEventListener());
 	}
 }
