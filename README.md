@@ -14,3 +14,5 @@ Optional --------------
 To install/download dependencies via maven:  
 Download maven  
 mvn clean install in the root folder  
+
+TODO Create a dev branch once bot is determined good enough to be left on full time for discord use  
