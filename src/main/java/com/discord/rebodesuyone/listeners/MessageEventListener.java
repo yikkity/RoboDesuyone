@@ -1,16 +1,16 @@
 package com.discord.rebodesuyone.listeners;
 
-import sx.blah.discord.api.IListener;
+import sx.blah.discord.api.EventSubscriber;
 import sx.blah.discord.handle.impl.events.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.util.DiscordException;
 import sx.blah.discord.util.HTTP429Exception;
 import sx.blah.discord.util.MissingPermissionsException;
 
-public class MessageEventListener implements IListener<MessageReceivedEvent> {
+public class MessageEventListener{
 
-	@Override
-	public void handle(MessageReceivedEvent event) {
+	@EventSubscriber
+	public void testEvent(MessageReceivedEvent event) {
 		IMessage message = event.getMessage();
 
 		if (message.getContent().equals("!test")) {
@@ -24,7 +24,6 @@ public class MessageEventListener implements IListener<MessageReceivedEvent> {
 				e.printStackTrace();
 			}
 		}
-
 	}
 
 }
