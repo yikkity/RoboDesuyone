@@ -14,10 +14,12 @@ import org.apache.commons.lang3.math.NumberUtils;
 
 import sx.blah.discord.api.EventSubscriber;
 import sx.blah.discord.handle.impl.events.MessageReceivedEvent;
+import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.util.DiscordException;
 import sx.blah.discord.util.HTTP429Exception;
+import sx.blah.discord.util.MessageList;
 import sx.blah.discord.util.MissingPermissionsException;
 
 public class MessageEventListener {
@@ -40,11 +42,18 @@ public class MessageEventListener {
 		}
 	}
 
+	//takes in and saves the message to be quoted
 	@EventSubscriber
 	public void GrabQuoteEvent(MessageReceivedEvent event) {
 		IMessage message = event.getMessage();
-		IUser author = message.getAuthor();
-		String messageToSave = author.getName() + " - " + message.getContent();
+		
+		//get the message before the command
+		IChannel channel = event.getClient().getChannelByID(message.getChannel().getID());
+		MessageList messages = channel.getMessages();
+		IMessage toBeQuoted = messages.get(messages.size()-1);
+		IUser author = toBeQuoted.getAuthor();
+		
+		String messageToSave = author.getName() + " - " + toBeQuoted.getContent();
 
 		// if the message is equal to the desired command word, then execute
 		if (message.getContent().equals("!quotethat")) {
@@ -91,7 +100,7 @@ public class MessageEventListener {
 					} else {
 						user = splitMessage[1];
 					}
-					
+
 					chosenQuote = getQuoteHelper(user, chosenQuoteIndex);
 					event.getClient().getChannelByID(message.getChannel().getID()).sendMessage(chosenQuote);
 
@@ -100,9 +109,10 @@ public class MessageEventListener {
 					chosenQuote = getQuoteHelper(user, chosenQuoteIndex);
 					event.getClient().getChannelByID(message.getChannel().getID()).sendMessage(chosenQuote);
 
-					// prevent user stupidity here
+					// shame user stupidity here
 				} else {
-
+					event.getClient().getChannelByID(message.getChannel().getID())
+							.sendMessage("Wrong quote input - correct input !quote <|username|quoteID>");
 				}
 
 			} catch (MissingPermissionsException e) {
@@ -122,7 +132,7 @@ public class MessageEventListener {
 		// open the quotes file
 		try (BufferedReader input = new BufferedReader(new FileReader("quotes.txt"))) {
 
-			// reads in quotes into the array list to be chosen
+			// stores quotes into the array list to be chosen
 			// reads in quotes of a specific person if username was
 			// given
 			// otherwise it will populate all quotes
