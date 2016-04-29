@@ -2,7 +2,6 @@ package com.discord.rebodesuyone.listeners;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -166,5 +165,10 @@ public class MessageEventListener {
 		}
 
 		return quotesList.get(chosenQuoteIndex);
+	}
+	
+	@EventSubscriber
+	public void dumpQuotes(MessageReceivedEvent event){
+		
 	}
 }
