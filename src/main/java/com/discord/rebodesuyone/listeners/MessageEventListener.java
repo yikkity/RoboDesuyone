@@ -26,4 +26,20 @@ public class MessageEventListener{
 		}
 	}
 
+	@EventSubscriber
+	public void yoEvent(MessageReceivedEvent event){
+		IMessage message = event.getMessage();
+		
+		if (message.getContent().equals("!yo")) {
+			try {
+				event.getClient().getChannelByID(message.getChannel().getID()).sendMessage("Yo!");
+			} catch (MissingPermissionsException e) {
+				e.printStackTrace();
+			} catch (HTTP429Exception e) {
+				e.printStackTrace();
+			} catch (DiscordException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 }
