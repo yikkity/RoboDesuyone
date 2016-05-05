@@ -43,13 +43,13 @@ public class MessageEventListener {
 
 	//takes in and saves the message to be quoted
 	@EventSubscriber
-	public void GrabQuoteEvent(MessageReceivedEvent event) {
+	public void QuotePreviousMessageCommand(MessageReceivedEvent event) {
 		IMessage message = event.getMessage();
 		
 		//get the message before the command
 		IChannel channel = event.getClient().getChannelByID(message.getChannel().getID());
 		MessageList messages = channel.getMessages();
-		IMessage toBeQuoted = messages.get(messages.size()-1);
+		IMessage toBeQuoted = messages.get(messages.size()-1); //get the message before the command
 		IUser author = toBeQuoted.getAuthor();
 		
 		String messageToSave = author.getName() + " - " + toBeQuoted.getContent();
@@ -81,30 +81,34 @@ public class MessageEventListener {
 	}
 
 	@EventSubscriber
-	public void QuoteSomeoneEvent(MessageReceivedEvent event) {
+	public void SayAQuoteCommand(MessageReceivedEvent event) {
 		IMessage message = event.getMessage();
+		String[] messageSplit = message.getContent().split(" ");
 		String user = "";
 		String chosenQuote;
 		int chosenQuoteIndex = -1;
 
 		// if the message is equal to the desired command word, then execute
-		if (message.getContent().equals("!quote")) {
+		if (messageSplit[0].equals("!quote")) {
 			try {
-				String[] splitMessage = message.getContent().split(" ");
 
-				// if the user gave a username or quote id to quote
-				if (splitMessage.length == 2) {
-					if (NumberUtils.isNumber(splitMessage[1])) {
-						chosenQuoteIndex = Integer.valueOf(splitMessage[1]);
+				// if the user gave a username or quote id
+				if (messageSplit.length == 2) {
+					
+					//check if the param is a quote id
+					if (NumberUtils.isNumber(messageSplit[1])) {
+						chosenQuoteIndex = Integer.valueOf(messageSplit[1]);
+						
+						//if it wasn't a number
 					} else {
-						user = splitMessage[1];
+						user = messageSplit[1];
 					}
 
 					chosenQuote = getQuoteHelper(user, chosenQuoteIndex);
 					event.getClient().getChannelByID(message.getChannel().getID()).sendMessage(chosenQuote);
 
-					// if the user didn't give a username to quote
-				} else if (splitMessage.length == 1) {
+					// if the user didn't give any params
+				} else if (messageSplit.length == 1) {
 					chosenQuote = getQuoteHelper(user, chosenQuoteIndex);
 					event.getClient().getChannelByID(message.getChannel().getID()).sendMessage(chosenQuote);
 
@@ -175,7 +179,7 @@ public class MessageEventListener {
 	}
 	
 	@EventSubscriber
-	public void queuePerson(MessageReceivedEvent event){
+	public void queuePersonEvent(MessageReceivedEvent event){
 		
 	}
 }
