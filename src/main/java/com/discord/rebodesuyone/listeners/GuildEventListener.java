@@ -10,6 +10,7 @@ public class GuildEventListener implements IListener<GuildCreateEvent>{
 
 	/* 
 	 * Method that's ran when the guild and channels populate for the bot
+	 * Basically a start up message is sent to the #general chat
 	 * 
 	 */
 	@Override

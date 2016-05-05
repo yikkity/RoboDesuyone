@@ -85,7 +85,7 @@ public class MessageEventListener {
 		IMessage message = event.getMessage();
 		String user = "";
 		String chosenQuote;
-		int chosenQuoteIndex = 0;
+		int chosenQuoteIndex = -1;
 
 		// if the message is equal to the desired command word, then execute
 		if (message.getContent().equals("!quote")) {
@@ -108,7 +108,7 @@ public class MessageEventListener {
 					chosenQuote = getQuoteHelper(user, chosenQuoteIndex);
 					event.getClient().getChannelByID(message.getChannel().getID()).sendMessage(chosenQuote);
 
-					// shame user stupidity here
+					// shame user here (or just tell them what the correct input is)
 				} else {
 					event.getClient().getChannelByID(message.getChannel().getID())
 							.sendMessage("Wrong quote input - correct input !quote <|username|quoteID>");
@@ -150,7 +150,7 @@ public class MessageEventListener {
 
 			// if the user didn't give a quote id, then it will randomly choose
 			// a quote
-			if (chosenQuoteIndex == 0) {
+			if (chosenQuoteIndex == -1) {
 				// randomly pick a quote
 				int maxRandomRange = quotesList.size();
 
@@ -167,8 +167,15 @@ public class MessageEventListener {
 		return quotesList.get(chosenQuoteIndex);
 	}
 	
+	//read all quotes from file and send user a PM with a link to text dump somehow
+	//pastebin api?
 	@EventSubscriber
 	public void dumpQuotes(MessageReceivedEvent event){
+		
+	}
+	
+	@EventSubscriber
+	public void queuePerson(MessageReceivedEvent event){
 		
 	}
 }
