@@ -16,3 +16,4 @@ Download maven
 mvn clean install in the root folder  
 
 TODO Create a dev branch once bot is determined good enough to be left on full time for discord use  
+TODO think of a better way to check for correct input in command parameters (username checking)
