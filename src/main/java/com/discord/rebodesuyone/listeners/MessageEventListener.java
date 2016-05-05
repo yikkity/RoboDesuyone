@@ -72,6 +72,10 @@ public class MessageEventListener {
 		}
 	}
 
+	// saves quotes manually
+	// gets a random quote from a specific user
+	// gets a specific quote
+	// gets a random quote
 	@EventSubscriber
 	public void quoteCommand(MessageReceivedEvent event) {
 		IMessage message = event.getMessage();
@@ -88,10 +92,10 @@ public class MessageEventListener {
 				if (messageSplit.length == 3) {
 					user = messageSplit[1];
 					String toBeQuoted = messageSplit[2];
-					
-					String messageToSave = user +" - "+ toBeQuoted;
+
+					String messageToSave = user + " - " + toBeQuoted;
 					writeQuoteHelper(messageToSave);
-					
+
 					// if the user gave a username or quote id
 				} else if (messageSplit.length == 2) {
 
@@ -115,8 +119,8 @@ public class MessageEventListener {
 					// shame user here (or just tell them what the correct input
 					// is)
 				} else {
-					event.getClient().getChannelByID(message.getChannel().getID())
-							.sendMessage("Wrong quote input - correct inputs = !quote | !quote username | !quote 1 | !quote username message");
+					event.getClient().getChannelByID(message.getChannel().getID()).sendMessage(
+							"Wrong quote input - correct inputs = !quote | !quote username | !quote 1 | !quote username message");
 				}
 
 			} catch (MissingPermissionsException e) {
@@ -188,11 +192,12 @@ public class MessageEventListener {
 	// read all quotes from file and send user a PM with a link to text dump
 	// somehow
 	// pastebin api?
+	// send as a PM?
 	@EventSubscriber
 	public void dumpQuotes(MessageReceivedEvent event) {
 
 	}
-	
+
 	// *********************
 	// confirmed: user will say !qup
 	// bot sees message
@@ -210,7 +215,16 @@ public class MessageEventListener {
 		IUser user = message.getAuthor();
 
 		if (message.getContent().equals("!qup")) {
+			// open the quotes file
+			try (PrintWriter output = new PrintWriter("queue.txt")) {
+				// write the new quote in
+				output.println(user.getName());
 
+				// close the file
+				output.close();
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -220,9 +234,34 @@ public class MessageEventListener {
 	@EventSubscriber
 	public void showQueueCommand(MessageReceivedEvent event) {
 		IMessage message = event.getMessage();
-
+		String person;
+		int count = 0;
+		StringBuilder queue = new StringBuilder();
 		if (message.getContent().equals("!showqueue")) {
+			// open the quotes file
+			try (BufferedReader input = new BufferedReader(new FileReader("quotes.txt"))) {
 
+				// goes through the list and builds the message
+				while ((person = input.readLine()) != null) {
+					count++;
+					queue.append(Integer.toString(count) + ". " + person + "\n");
+				}
+
+				// close the file
+				input.close();
+
+				event.getClient().getChannelByID(message.getChannel().getID()).sendMessage(queue.toString());
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (MissingPermissionsException e) {
+				e.printStackTrace();
+			} catch (HTTP429Exception e) {
+				e.printStackTrace();
+			} catch (DiscordException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 }
