@@ -41,17 +41,21 @@ public class MessageEventListener {
 		}
 	}
 
-	//takes in and saves the message to be quoted
+	// takes in and saves the message to be quoted
 	@EventSubscriber
-	public void QuotePreviousMessageCommand(MessageReceivedEvent event) {
+	public void quotePreviousMessageCommand(MessageReceivedEvent event) {
 		IMessage message = event.getMessage();
-		
-		//get the message before the command
+
+		// get the message before the command
 		IChannel channel = event.getClient().getChannelByID(message.getChannel().getID());
 		MessageList messages = channel.getMessages();
-		IMessage toBeQuoted = messages.get(messages.size()-1); //get the message before the command
+		IMessage toBeQuoted = messages.get(messages.size() - 1); // get the
+																	// message
+																	// before
+																	// the
+																	// command
 		IUser author = toBeQuoted.getAuthor();
-		
+
 		String messageToSave = author.getName() + " - " + toBeQuoted.getContent();
 
 		// if the message is equal to the desired command word, then execute
@@ -81,7 +85,7 @@ public class MessageEventListener {
 	}
 
 	@EventSubscriber
-	public void SayAQuoteCommand(MessageReceivedEvent event) {
+	public void sayAQuoteCommand(MessageReceivedEvent event) {
 		IMessage message = event.getMessage();
 		String[] messageSplit = message.getContent().split(" ");
 		String user = "";
@@ -94,12 +98,12 @@ public class MessageEventListener {
 
 				// if the user gave a username or quote id
 				if (messageSplit.length == 2) {
-					
-					//check if the param is a quote id
+
+					// check if the param is a quote id
 					if (NumberUtils.isNumber(messageSplit[1])) {
 						chosenQuoteIndex = Integer.valueOf(messageSplit[1]);
-						
-						//if it wasn't a number
+
+						// if it wasn't a number
 					} else {
 						user = messageSplit[1];
 					}
@@ -112,7 +116,8 @@ public class MessageEventListener {
 					chosenQuote = getQuoteHelper(user, chosenQuoteIndex);
 					event.getClient().getChannelByID(message.getChannel().getID()).sendMessage(chosenQuote);
 
-					// shame user here (or just tell them what the correct input is)
+					// shame user here (or just tell them what the correct input
+					// is)
 				} else {
 					event.getClient().getChannelByID(message.getChannel().getID())
 							.sendMessage("Wrong quote input - correct input !quote <|username|quoteID>");
@@ -170,16 +175,45 @@ public class MessageEventListener {
 
 		return quotesList.get(chosenQuoteIndex);
 	}
-	
-	//read all quotes from file and send user a PM with a link to text dump somehow
-	//pastebin api?
+
+	// read all quotes from file and send user a PM with a link to text dump
+	// somehow
+	// pastebin api?
 	@EventSubscriber
-	public void dumpQuotes(MessageReceivedEvent event){
+	public void dumpQuotes(MessageReceivedEvent event) {
+
+	}
+
+	/*
+	 * confirmed: user will say !qup 
+	 * bot sees message 
+	 * writes user's name
+	 * to file
+	 * 
+	 * not confirmed 
+	 * set timer? 
+	 * when timer resolves pm user
+	 * when timer resolves remove user's name from list
+	 */
+	@EventSubscriber
+	public void queuePersonCommand(MessageReceivedEvent event) {
+		IMessage message = event.getMessage();
+		IUser user = message.getAuthor();
 		
+		if (message.getContent().equals("!qup")) {
+			
+		}
 	}
 	
+	/*
+	 * will print out queue as a message in the chat the command was typed in
+	 */
 	@EventSubscriber
-	public void queuePersonEvent(MessageReceivedEvent event){
+	public void showQueueCommand(MessageReceivedEvent event) {
+		IMessage message = event.getMessage();
 		
+		if (message.getContent().equals("!qup")) {
+			
+		}
 	}
 }
