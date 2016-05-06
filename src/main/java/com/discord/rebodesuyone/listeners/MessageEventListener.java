@@ -21,6 +21,10 @@ import sx.blah.discord.util.HTTP429Exception;
 import sx.blah.discord.util.MessageList;
 import sx.blah.discord.util.MissingPermissionsException;
 
+/*
+ * Will have to eventually refactor this into a new command class to handle all the commands
+ * 
+ */
 public class MessageEventListener {
 
 	@EventSubscriber
@@ -59,7 +63,7 @@ public class MessageEventListener {
 		// if the message is equal to the desired command word, then execute
 		if (message.getContent().equals("!quotethat")) {
 			try {
-				writeQuoteHelper(messageToSave);
+				writeToFileHelper(messageToSave, "quotes.txt");
 				event.getClient().getChannelByID(message.getChannel().getID()).sendMessage("Message Quoted");
 
 			} catch (MissingPermissionsException e) {
@@ -94,7 +98,9 @@ public class MessageEventListener {
 					String toBeQuoted = messageSplit[2];
 
 					String messageToSave = user + " - " + toBeQuoted;
-					writeQuoteHelper(messageToSave);
+					writeToFileHelper(messageToSave, "quotes.txt");
+
+					event.getClient().getChannelByID(message.getChannel().getID()).sendMessage("Quote Added");
 
 					// if the user gave a username or quote id
 				} else if (messageSplit.length == 2) {
@@ -133,9 +139,9 @@ public class MessageEventListener {
 		}
 	}
 
-	private void writeQuoteHelper(String messageToSave) {
+	private void writeToFileHelper(String messageToSave, String filename) {
 		// open the quotes file
-		try (PrintWriter output = new PrintWriter("quotes.txt")) {
+		try (PrintWriter output = new PrintWriter(filename)) {
 			// write the new quote in
 			output.println(messageToSave);
 
@@ -189,6 +195,35 @@ public class MessageEventListener {
 		return quotesList.get(chosenQuoteIndex);
 	}
 
+	private List<String> getQueueFromFile() {
+		String fromFile;
+		int count = 0;
+		List<String> queue = new ArrayList<String>();
+
+		// open the quotes file
+		try (BufferedReader input = new BufferedReader(new FileReader("queue.txt"))) {
+
+			// stores quotes into the array list to be chosen
+			// reads in quotes of a specific person if username was
+			// given
+			// otherwise it will populate all quotes
+			while ((fromFile = input.readLine()) != null) {
+				count++;
+				queue.add(Integer.toString(count) + ". " + fromFile + "\n");
+			}
+
+			// close the file
+			input.close();
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+
+		return queue;
+	}
+
 	// read all quotes from file and send user a PM with a link to text dump
 	// somehow
 	// pastebin api?
@@ -215,14 +250,17 @@ public class MessageEventListener {
 		IUser user = message.getAuthor();
 
 		if (message.getContent().equals("!qup")) {
-			// open the quotes file
-			try (PrintWriter output = new PrintWriter("queue.txt")) {
-				// write the new quote in
-				output.println(user.getName());
+			// write to queue file
+			try {
+				writeToFileHelper(user.getName(), "queue.txt");
 
-				// close the file
-				output.close();
-			} catch (FileNotFoundException e) {
+				event.getClient().getChannelByID(message.getChannel().getID())
+						.sendMessage(user.getName() + " was added to the queue.");
+			} catch (MissingPermissionsException e) {
+				e.printStackTrace();
+			} catch (HTTP429Exception e) {
+				e.printStackTrace();
+			} catch (DiscordException e) {
 				e.printStackTrace();
 			}
 		}
@@ -234,27 +272,19 @@ public class MessageEventListener {
 	@EventSubscriber
 	public void showQueueCommand(MessageReceivedEvent event) {
 		IMessage message = event.getMessage();
-		String person;
 		int count = 0;
-		StringBuilder queue = new StringBuilder();
+		List<String> queue = new ArrayList<String>();
+		StringBuilder queueString = new StringBuilder();
 		if (message.getContent().equals("!showqueue")) {
 			// open the quotes file
-			try (BufferedReader input = new BufferedReader(new FileReader("quotes.txt"))) {
-
-				// goes through the list and builds the message
-				while ((person = input.readLine()) != null) {
-					count++;
-					queue.append(Integer.toString(count) + ". " + person + "\n");
+			try {
+				queue = getQueueFromFile();
+				
+				for(String person:queue){
+					queueString.append(person+"\n");
 				}
 
-				// close the file
-				input.close();
-
-				event.getClient().getChannelByID(message.getChannel().getID()).sendMessage(queue.toString());
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
+				event.getClient().getChannelByID(message.getChannel().getID()).sendMessage(queueString.toString());
 			} catch (MissingPermissionsException e) {
 				e.printStackTrace();
 			} catch (HTTP429Exception e) {
