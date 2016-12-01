@@ -19,13 +19,10 @@ public class GuildEventListener implements IListener<GuildCreateEvent>{
 			//general channel id: 173441141323071488
 			event.getClient().getChannelByID("173441141323071488").sendMessage("I'm awake");
 		} catch (MissingPermissionsException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (HTTP429Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (DiscordException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
