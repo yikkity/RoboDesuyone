@@ -27,6 +27,7 @@ import sx.blah.discord.util.MissingPermissionsException;
  */
 public class MessageEventListener {
 
+    //TODO possibly refactor all methods into one big switch statement
     @EventSubscriber
     public void testEvent(MessageReceivedEvent event) {
         IMessage message = event.getMessage();
@@ -51,13 +52,15 @@ public class MessageEventListener {
         return "That is not a command.";
     }
 
-    /*
-     * Quote commands !quotethat !quote !quote username !quote <quoteId> !quote
-     * username message !quotedump
-     * 
-     * Still need to test
-     * 
-     */
+    // Quote commands
+    // !quotethat
+    // !quote
+    // !quote username
+    // !quote <quoteId>
+    // !quote username message
+    // !quotedump
+
+    // Still need to test
 
     // takes in and saves the message to be quoted
     @EventSubscriber
@@ -107,11 +110,13 @@ public class MessageEventListener {
             try {
 
                 // if the user wants to manually quote someone
+                // TODO: create a check against user list to check if actual
+                // user is given
                 if (messageSplit.length == 3) {
                     user = messageSplit[1];
                     String toBeQuoted = messageSplit[2];
 
-                    String messageToSave = user + " - " + toBeQuoted;
+                    String messageToSave = user + " - \"" + toBeQuoted + "\"";
                     writeToFileHelper(messageToSave, "quotes.txt");
 
                     event.getClient().getChannelByID(message.getChannel().getID()).sendMessage("Quote Added");
@@ -136,12 +141,12 @@ public class MessageEventListener {
                     chosenQuote = getQuoteHelper(user, chosenQuoteIndex);
                     event.getClient().getChannelByID(message.getChannel().getID()).sendMessage(chosenQuote);
 
-                    // shame user here (or just tell them what the correct input
-                    // is)
-                } else {
-                    event.getClient().getChannelByID(message.getChannel().getID()).sendMessage(
-                            "Wrong quote input - correct inputs = !quote | !quote username | !quote 1 | !quote username message");
                 }
+                // else {
+                // event.getClient().getChannelByID(message.getChannel().getID()).sendMessage(
+                // "Wrong quote input - correct inputs = !quote | !quote
+                // username | !quote 1 | !quote username message");
+                // }
 
             } catch (MissingPermissionsException e) {
                 e.printStackTrace();
@@ -166,6 +171,7 @@ public class MessageEventListener {
         }
     }
 
+    // TODO: write a user not found response
     private String getQuoteHelper(String user, int chosenQuoteIndex) {
         String quote;
         List<String> quotesList = new ArrayList<String>();
@@ -209,35 +215,6 @@ public class MessageEventListener {
         return quotesList.get(chosenQuoteIndex);
     }
 
-    private List<String> getQueueFromFile() {
-        String fromFile;
-        int count = 0;
-        List<String> queue = new ArrayList<String>();
-
-        // open the quotes file
-        try (BufferedReader input = new BufferedReader(new FileReader("queue.txt"))) {
-
-            // stores quotes into the array list to be chosen
-            // reads in quotes of a specific person if username was
-            // given
-            // otherwise it will populate all quotes
-            while ((fromFile = input.readLine()) != null) {
-                count++;
-                queue.add(Integer.toString(count) + ". " + fromFile + "\n");
-            }
-
-            // close the file
-            input.close();
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e1) {
-            e1.printStackTrace();
-        }
-
-        return queue;
-    }
-
     // read all quotes from file and send user a PM with a link to text dump
     // somehow
     // pastebin api?
@@ -248,12 +225,12 @@ public class MessageEventListener {
     }
 
     // Queue commands
-    // !queueup
+    // !lineup
     // !done
     // !showqueue
 
     // confirmed:
-    // user will say !queueup
+    // user will say !lineup
     // bot sees message
     // writes user's name to file
 
@@ -261,13 +238,14 @@ public class MessageEventListener {
     // remove user's name from list
     // - command !done
     // -- will remove user from queue list
+    // -- will pm next user #1 in line
 
     @EventSubscriber
     public void queuePersonCommand(MessageReceivedEvent event) {
         IMessage message = event.getMessage();
         IUser user = message.getAuthor();
 
-        if (message.getContent().equals("!queueup")) {
+        if (message.getContent().equals("!lineup")) {
             // write to queue file
             try {
                 writeToFileHelper(user.getName(), "queue.txt");
@@ -311,5 +289,34 @@ public class MessageEventListener {
                 e.printStackTrace();
             }
         }
+    }
+
+    private List<String> getQueueFromFile() {
+        String fromFile;
+        int count = 0;
+        List<String> queue = new ArrayList<String>();
+
+        // open the quotes file
+        try (BufferedReader input = new BufferedReader(new FileReader("queue.txt"))) {
+
+            // stores quotes into the array list to be chosen
+            // reads in quotes of a specific person if username was
+            // given
+            // otherwise it will populate all quotes
+            while ((fromFile = input.readLine()) != null) {
+                count++;
+                queue.add(Integer.toString(count) + ". " + fromFile + "\n");
+            }
+
+            // close the file
+            input.close();
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
+
+        return queue;
     }
 }
