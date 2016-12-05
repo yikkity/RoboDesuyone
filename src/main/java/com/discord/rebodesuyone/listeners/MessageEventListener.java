@@ -39,26 +39,28 @@ public class MessageEventListener {
         IMessage message = event.getMessage();
         String channelId = message.getChannel().getID();
         IChannel channel = event.getClient().getChannelByID(channelId);
+        IDiscordClient client = event.getClient();
 
         String messageContent = message.getContent();
         String[] messageSplit = messageContent.split(" ");
 
         switch (messageSplit[0]) {
         case "!test":
-            testEvent(event.getClient(), channelId);
+            testEvent(client, channelId);
             break;
         case "!quotethat":
-            quotePreviousMessageCommand(event.getClient(), channelId, channel);
+            quotePreviousMessageCommand(client, channelId, channel);
             break;
         case "!quote":
-            quoteCommand(event.getClient(), messageSplit, channelId);
+            quoteCommand(client, messageSplit, channelId);
+            break;
         default:
-            notACommand();
+            try {
+                client.getChannelByID(channelId).sendMessage("That is not a command");
+            } catch (MissingPermissionsException | HTTP429Exception | DiscordException e) {
+                e.printStackTrace();
+            }
         }
-    }
-
-    private String notACommand() {
-        return "That is not a command.";
     }
 
     @EventSubscriber
@@ -75,7 +77,7 @@ public class MessageEventListener {
         }
     }
 
-    // -----------------------------------------
+    // -----------------------------------------------------------------------------------------------------------------
 
     // Quote commands
     // !quotethat
@@ -141,7 +143,8 @@ public class MessageEventListener {
                     // if the user gave a username or quote id
                 } else if (messageSplit.length == 2) {
 
-                    // check if the param is a quote id
+                    // check if the param is a numerical
+                    // should be the quoteid
                     if (NumberUtils.isNumber(messageSplit[1])) {
                         chosenQuoteIndex = Integer.valueOf(messageSplit[1]);
 
@@ -160,7 +163,7 @@ public class MessageEventListener {
 
                 }
                 // else {
-                //TODO move this string to help command
+                // TODO move this string to help command
                 // event.getClient().getChannelByID(message.getChannel().getID()).sendMessage(
                 // "Wrong quote input - correct inputs = !quote | !quote
                 // username | !quote 1 | !quote username message");
@@ -176,6 +179,7 @@ public class MessageEventListener {
         }
     }
 
+    // TODO this
     // read all quotes from file and send to user
     // send as a PM? <-- seems likely - less work lol
     @EventSubscriber
@@ -183,7 +187,7 @@ public class MessageEventListener {
 
     }
 
-    // -----------------------------------------
+    // -----------------------------------------------------------------------------------------------------------------
 
     // Queue commands
     // !lineup
@@ -252,10 +256,10 @@ public class MessageEventListener {
         }
     }
 
-    // -----------------------------------------
+    // -----------------------------------------------------------------------------------------------------------------
 
     // Helper and Misc methods
-
+    
     private void writeToFileHelper(String messageToSave, String filename) {
         // open the quotes file
         try (PrintWriter output = new PrintWriter(filename)) {
