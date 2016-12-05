@@ -12,6 +12,7 @@ import java.util.Random;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import sx.blah.discord.api.EventSubscriber;
+import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.handle.impl.events.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IMessage;
@@ -27,18 +28,30 @@ import sx.blah.discord.util.MissingPermissionsException;
  */
 public class MessageEventListener {
 
-    //TODO possibly refactor all methods into one big switch statement
-    @EventSubscriber
-    public void testEvent(MessageReceivedEvent event) {
+    // TODO possibly refactor all methods so that there is one method that grabs
+    // the command then goes into a switch statement for the correct command
+    // then it calls the appropriate method for the command
+
+    public void commandOperator(MessageReceivedEvent event) {
         IMessage message = event.getMessage();
 
-        // if the message is equal to the desired command word, then execute
+        switch (message.getContent()) {
+        case "!test":
+            testEvent(event.getClient(), message);
+            break;
+        default: notACommand();
+        }
+    }
+
+    private String notACommand() {
+        return "That is not a command.";
+    }
+    
+    @EventSubscriber
+    public void testEvent(IDiscordClient dClient, IMessage message) {
+
         try {
-            if (message.getContent().equals("!test")) {
-                event.getClient().getChannelByID(message.getChannel().getID()).sendMessage("Bye Nyx");
-            } else {
-                event.getClient().getChannelByID(message.getChannel().getID()).sendMessage(notACommand());
-            }
+            dClient.getChannelByID(message.getChannel().getID()).sendMessage("Bye Nyx");
         } catch (MissingPermissionsException e) {
             e.printStackTrace();
         } catch (HTTP429Exception e) {
@@ -47,11 +60,7 @@ public class MessageEventListener {
             e.printStackTrace();
         }
     }
-
-    private String notACommand() {
-        return "That is not a command.";
-    }
-
+    
     // Quote commands
     // !quotethat
     // !quote
