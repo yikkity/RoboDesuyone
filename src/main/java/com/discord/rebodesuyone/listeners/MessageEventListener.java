@@ -28,13 +28,10 @@ import sx.blah.discord.util.MissingPermissionsException;
  */
 public class MessageEventListener {
 
-    // TODO possibly refactor all methods so that there is one method that grabs
-    // the command then goes into a switch statement for the correct command
-    // then it calls the appropriate method for the command
-
     // TODO write a help command that lists all readable permutations of
     // commands
 
+    // Operator method to handle all command inputs then calls the relevant
     public void commandOperator(MessageReceivedEvent event) {
         IMessage message = event.getMessage();
         String channelId = message.getChannel().getID();
@@ -46,27 +43,30 @@ public class MessageEventListener {
         String messageContent = message.getContent();
         String[] messageSplit = messageContent.split(" ");
 
-        switch (messageSplit[0]) {
-        case "!test":
-            testEvent(client, channelId);
-            break;
-        case "!quotethat":
-            quotePreviousMessageCommand(client, channelId, channel);
-            break;
-        case "!quote":
-            quoteCommand(client, messageSplit, channelId);
-            break;
-        case "!lineup":
-            queuePersonCommand(client, username, channelId);
-            break;
-        case "!showqueue":
-            showQueueCommand(client, channelId);
-            break;
-        default:
-            try {
-                client.getChannelByID(channelId).sendMessage("That is not a command");
-            } catch (MissingPermissionsException | HTTP429Exception | DiscordException e) {
-                e.printStackTrace();
+        // makes sure that only messages with '!' as the first char gets checked
+        if (messageSplit[0].charAt(0) == '!') {
+            switch (messageSplit[0]) {
+            case "!test":
+                testEvent(client, channelId);
+                break;
+            case "!quotethat":
+                quotePreviousMessageCommand(client, channelId, channel);
+                break;
+            case "!quote":
+                quoteCommand(client, messageSplit, channelId);
+                break;
+            case "!lineup":
+                queuePersonCommand(client, username, channelId);
+                break;
+            case "!showqueue":
+                showQueueCommand(client, channelId);
+                break;
+            default:
+                try {
+                    client.getChannelByID(channelId).sendMessage("That is not a command!");
+                } catch (MissingPermissionsException | HTTP429Exception | DiscordException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
