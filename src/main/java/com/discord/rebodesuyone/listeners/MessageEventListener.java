@@ -32,26 +32,40 @@ public class MessageEventListener {
     // the command then goes into a switch statement for the correct command
     // then it calls the appropriate method for the command
 
+    // TODO write a help command that lists all readable permutations of
+    // commands
+
     public void commandOperator(MessageReceivedEvent event) {
         IMessage message = event.getMessage();
+        String channelId = message.getChannel().getID();
+        IChannel channel = event.getClient().getChannelByID(channelId);
 
-        switch (message.getContent()) {
+        String messageContent = message.getContent();
+        String[] messageSplit = messageContent.split(" ");
+
+        switch (messageSplit[0]) {
         case "!test":
-            testEvent(event.getClient(), message);
+            testEvent(event.getClient(), channelId);
             break;
-        default: notACommand();
+        case "!quotethat":
+            quotePreviousMessageCommand(event.getClient(), channelId, channel);
+            break;
+        case "!quote":
+            quoteCommand(event.getClient(), messageSplit, channelId);
+        default:
+            notACommand();
         }
     }
 
     private String notACommand() {
         return "That is not a command.";
     }
-    
+
     @EventSubscriber
-    public void testEvent(IDiscordClient dClient, IMessage message) {
+    public void testEvent(IDiscordClient dClient, String channelId) {
 
         try {
-            dClient.getChannelByID(message.getChannel().getID()).sendMessage("Bye Nyx");
+            dClient.getChannelByID(channelId).sendMessage("Bye Nyx");
         } catch (MissingPermissionsException e) {
             e.printStackTrace();
         } catch (HTTP429Exception e) {
@@ -60,7 +74,9 @@ public class MessageEventListener {
             e.printStackTrace();
         }
     }
-    
+
+    // -----------------------------------------
+
     // Quote commands
     // !quotethat
     // !quote
@@ -73,32 +89,26 @@ public class MessageEventListener {
 
     // takes in and saves the message to be quoted
     @EventSubscriber
-    public void quotePreviousMessageCommand(MessageReceivedEvent event) {
-        IMessage message = event.getMessage();
+    public void quotePreviousMessageCommand(IDiscordClient dClient, String channelId, IChannel channel) {
 
         // get the message before the command
-        IChannel channel = event.getClient().getChannelByID(message.getChannel().getID());
         MessageList messages = channel.getMessages();
-
-        // get the message before the command
         IMessage toBeQuoted = messages.get(messages.size() - 1);
         IUser author = toBeQuoted.getAuthor();
 
+        // create the quote string to be saved
         String messageToSave = author.getName() + " - " + toBeQuoted.getContent();
 
-        // if the message is equal to the desired command word, then execute
-        if (message.getContent().equals("!quotethat")) {
-            try {
-                writeToFileHelper(messageToSave, "quotes.txt");
-                event.getClient().getChannelByID(message.getChannel().getID()).sendMessage("Message Quoted");
+        try {
+            writeToFileHelper(messageToSave, "quotes.txt");
+            dClient.getChannelByID(channelId).sendMessage("Message Quoted");
 
-            } catch (MissingPermissionsException e) {
-                e.printStackTrace();
-            } catch (HTTP429Exception e) {
-                e.printStackTrace();
-            } catch (DiscordException e) {
-                e.printStackTrace();
-            }
+        } catch (MissingPermissionsException e) {
+            e.printStackTrace();
+        } catch (HTTP429Exception e) {
+            e.printStackTrace();
+        } catch (DiscordException e) {
+            e.printStackTrace();
         }
     }
 
@@ -107,9 +117,7 @@ public class MessageEventListener {
     // gets a specific quote
     // gets a random quote
     @EventSubscriber
-    public void quoteCommand(MessageReceivedEvent event) {
-        IMessage message = event.getMessage();
-        String[] messageSplit = message.getContent().split(" ");
+    public void quoteCommand(IDiscordClient dClient, String[] messageSplit, String channelId) {
         String user = "";
         String chosenQuote;
         int chosenQuoteIndex = -1;
@@ -128,7 +136,7 @@ public class MessageEventListener {
                     String messageToSave = user + " - \"" + toBeQuoted + "\"";
                     writeToFileHelper(messageToSave, "quotes.txt");
 
-                    event.getClient().getChannelByID(message.getChannel().getID()).sendMessage("Quote Added");
+                    dClient.getChannelByID(channelId).sendMessage("Quote Added");
 
                     // if the user gave a username or quote id
                 } else if (messageSplit.length == 2) {
@@ -143,15 +151,16 @@ public class MessageEventListener {
                     }
 
                     chosenQuote = getQuoteHelper(user, chosenQuoteIndex);
-                    event.getClient().getChannelByID(message.getChannel().getID()).sendMessage(chosenQuote);
+                    dClient.getChannelByID(channelId).sendMessage(chosenQuote);
 
                     // if the user didn't give any params
                 } else if (messageSplit.length == 1) {
                     chosenQuote = getQuoteHelper(user, chosenQuoteIndex);
-                    event.getClient().getChannelByID(message.getChannel().getID()).sendMessage(chosenQuote);
+                    dClient.getChannelByID(channelId).sendMessage(chosenQuote);
 
                 }
                 // else {
+                //TODO move this string to help command
                 // event.getClient().getChannelByID(message.getChannel().getID()).sendMessage(
                 // "Wrong quote input - correct inputs = !quote | !quote
                 // username | !quote 1 | !quote username message");
@@ -167,71 +176,14 @@ public class MessageEventListener {
         }
     }
 
-    private void writeToFileHelper(String messageToSave, String filename) {
-        // open the quotes file
-        try (PrintWriter output = new PrintWriter(filename)) {
-            // write the new quote in
-            output.println(messageToSave);
-
-            // close the file
-            output.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
-
-    // TODO: write a user not found response
-    private String getQuoteHelper(String user, int chosenQuoteIndex) {
-        String quote;
-        List<String> quotesList = new ArrayList<String>();
-
-        // open the quotes file
-        try (BufferedReader input = new BufferedReader(new FileReader("quotes.txt"))) {
-
-            // stores quotes into the array list to be chosen
-            // reads in quotes of a specific person if username was
-            // given
-            // otherwise it will populate all quotes
-            while ((quote = input.readLine()) != null) {
-                if (!user.isEmpty()) {
-                    if (quote.contains(user)) {
-                        quotesList.add(quote);
-                    }
-                } else {
-                    quotesList.add(quote);
-                }
-            }
-
-            // close the file
-            input.close();
-
-            // if the user didn't give a quote id, then it will randomly choose
-            // a quote
-            if (chosenQuoteIndex == -1) {
-                // randomly pick a quote
-                int maxRandomRange = quotesList.size();
-
-                Random random = new Random();
-                chosenQuoteIndex = random.nextInt(maxRandomRange);
-            }
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e1) {
-            e1.printStackTrace();
-        }
-
-        return quotesList.get(chosenQuoteIndex);
-    }
-
-    // read all quotes from file and send user a PM with a link to text dump
-    // somehow
-    // pastebin api?
+    // read all quotes from file and send to user
     // send as a PM? <-- seems likely - less work lol
     @EventSubscriber
     public void dumpQuotes(MessageReceivedEvent event) {
 
     }
+
+    // -----------------------------------------
 
     // Queue commands
     // !lineup
@@ -298,6 +250,67 @@ public class MessageEventListener {
                 e.printStackTrace();
             }
         }
+    }
+
+    // -----------------------------------------
+
+    // Helper and Misc methods
+
+    private void writeToFileHelper(String messageToSave, String filename) {
+        // open the quotes file
+        try (PrintWriter output = new PrintWriter(filename)) {
+            // write the new quote in
+            output.println(messageToSave);
+
+            // close the file
+            output.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // TODO: write a user not found response
+    private String getQuoteHelper(String user, int chosenQuoteIndex) {
+        String quote;
+        List<String> quotesList = new ArrayList<String>();
+
+        // open the quotes file
+        try (BufferedReader input = new BufferedReader(new FileReader("quotes.txt"))) {
+
+            // stores quotes into the array list to be chosen
+            // reads in quotes of a specific person if username was
+            // given
+            // otherwise it will populate all quotes
+            while ((quote = input.readLine()) != null) {
+                if (!user.isEmpty()) {
+                    if (quote.contains(user)) {
+                        quotesList.add(quote);
+                    }
+                } else {
+                    quotesList.add(quote);
+                }
+            }
+
+            // close the file
+            input.close();
+
+            // if the user didn't give a quote id, then it will randomly choose
+            // a quote
+            if (chosenQuoteIndex == -1) {
+                // randomly pick a quote
+                int maxRandomRange = quotesList.size();
+
+                Random random = new Random();
+                chosenQuoteIndex = random.nextInt(maxRandomRange);
+            }
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
+
+        return quotesList.get(chosenQuoteIndex);
     }
 
     private List<String> getQueueFromFile() {
