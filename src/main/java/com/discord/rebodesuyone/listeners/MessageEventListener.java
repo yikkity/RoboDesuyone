@@ -40,6 +40,8 @@ public class MessageEventListener {
         String channelId = message.getChannel().getID();
         IChannel channel = event.getClient().getChannelByID(channelId);
         IDiscordClient client = event.getClient();
+        IUser user = message.getAuthor();
+        String username = user.getName();
 
         String messageContent = message.getContent();
         String[] messageSplit = messageContent.split(" ");
@@ -53,6 +55,12 @@ public class MessageEventListener {
             break;
         case "!quote":
             quoteCommand(client, messageSplit, channelId);
+            break;
+        case "!lineup":
+            queuePersonCommand(client, username, channelId);
+            break;
+        case "!showqueue":
+            showQueueCommand(client, channelId);
             break;
         default:
             try {
@@ -206,24 +214,18 @@ public class MessageEventListener {
     // -- will pm next user #1 in line
 
     @EventSubscriber
-    public void queuePersonCommand(MessageReceivedEvent event) {
-        IMessage message = event.getMessage();
-        IUser user = message.getAuthor();
+    public void queuePersonCommand(IDiscordClient dClient, String username, String channelId) {
 
-        if (message.getContent().equals("!lineup")) {
-            // write to queue file
-            try {
-                writeToFileHelper(user.getName(), "queue.txt");
-
-                event.getClient().getChannelByID(message.getChannel().getID())
-                        .sendMessage(user.getName() + " was added to the queue.");
-            } catch (MissingPermissionsException e) {
-                e.printStackTrace();
-            } catch (HTTP429Exception e) {
-                e.printStackTrace();
-            } catch (DiscordException e) {
-                e.printStackTrace();
-            }
+        // write to queue file
+        try {
+            writeToFileHelper(username, "queue.txt");
+            dClient.getChannelByID(channelId).sendMessage(username + " was added to the queue.");
+        } catch (MissingPermissionsException e) {
+            e.printStackTrace();
+        } catch (HTTP429Exception e) {
+            e.printStackTrace();
+        } catch (DiscordException e) {
+            e.printStackTrace();
         }
     }
 
@@ -232,34 +234,31 @@ public class MessageEventListener {
      * might change to pm to that person if determined too spammy
      */
     @EventSubscriber
-    public void showQueueCommand(MessageReceivedEvent event) {
-        IMessage message = event.getMessage();
+    public void showQueueCommand(IDiscordClient dClient, String channelId) {
         List<String> queue = new ArrayList<String>();
         StringBuilder queueString = new StringBuilder();
-        if (message.getContent().equals("!showqueue")) {
-            // open the quotes file
-            try {
-                queue = getQueueFromFile();
+        // open the quotes file
+        try {
+            queue = getQueueFromFile();
 
-                for (String person : queue) {
-                    queueString.append(person + "\n");
-                }
-
-                event.getClient().getChannelByID(message.getChannel().getID()).sendMessage(queueString.toString());
-            } catch (MissingPermissionsException e) {
-                e.printStackTrace();
-            } catch (HTTP429Exception e) {
-                e.printStackTrace();
-            } catch (DiscordException e) {
-                e.printStackTrace();
+            for (String person : queue) {
+                queueString.append(person + "\n");
             }
+
+            dClient.getChannelByID(channelId).sendMessage(queueString.toString());
+        } catch (MissingPermissionsException e) {
+            e.printStackTrace();
+        } catch (HTTP429Exception e) {
+            e.printStackTrace();
+        } catch (DiscordException e) {
+            e.printStackTrace();
         }
     }
 
     // -----------------------------------------------------------------------------------------------------------------
 
     // Helper and Misc methods
-    
+
     private void writeToFileHelper(String messageToSave, String filename) {
         // open the quotes file
         try (PrintWriter output = new PrintWriter(filename)) {
