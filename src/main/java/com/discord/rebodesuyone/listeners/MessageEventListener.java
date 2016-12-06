@@ -25,19 +25,12 @@ import sx.blah.discord.util.MessageList;
 import sx.blah.discord.util.MissingPermissionsException;
 import sx.blah.discord.util.RateLimitException;
 
-/*
- * Will have to eventually refactor this into a new command class to handle all the commands
- * 
- */
 public class MessageEventListener implements IListener<MessageReceivedEvent> {
 
     @Override
     public void handle(MessageReceivedEvent event) {
 
     }
-
-    // TODO write a help command that lists all readable permutations of
-    // commands
 
     // Operator method to handle all command inputs then calls the relevant
     @EventSubscriber
