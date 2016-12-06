@@ -32,6 +32,7 @@ public class MessageEventListener {
     // commands
 
     // Operator method to handle all command inputs then calls the relevant
+    @EventSubscriber
     public void commandOperator(MessageReceivedEvent event) {
         IMessage message = event.getMessage();
         String channelId = message.getChannel().getID();
@@ -71,7 +72,6 @@ public class MessageEventListener {
         }
     }
 
-    @EventSubscriber
     public void testEvent(IDiscordClient dClient, String channelId) {
 
         try {
@@ -95,7 +95,6 @@ public class MessageEventListener {
     // Still need to test
 
     // takes in and saves the message to be quoted
-    @EventSubscriber
     public void quotePreviousMessageCommand(IDiscordClient dClient, String channelId, IChannel channel) {
 
         // get the message before the command
@@ -120,7 +119,6 @@ public class MessageEventListener {
     // gets a random quote from a specific user
     // gets a specific quote
     // gets a random quote
-    @EventSubscriber
     public void quoteCommand(IDiscordClient dClient, String[] messageSplit, String channelId) {
         String user = "";
         String chosenQuote;
@@ -178,7 +176,6 @@ public class MessageEventListener {
     // TODO this
     // read all quotes from file and send to user
     // send as a PM? <-- seems likely - less work lol
-    @EventSubscriber
     public void dumpQuotes(MessageReceivedEvent event) {
 
     }
@@ -201,7 +198,6 @@ public class MessageEventListener {
     // -- will remove user from queue list
     // -- will pm next user #1 in line
 
-    @EventSubscriber
     public void queuePersonCommand(IDiscordClient dClient, String username, String channelId) {
 
         // write to queue file
@@ -217,7 +213,6 @@ public class MessageEventListener {
      * will print out queue as a message in the chat the command was typed in
      * might change to pm to that person if determined too spammy
      */
-    @EventSubscriber
     public void showQueueCommand(IDiscordClient dClient, String channelId) {
         List<String> queue = new ArrayList<String>();
         StringBuilder queueString = new StringBuilder();
@@ -261,8 +256,7 @@ public class MessageEventListener {
         try (BufferedReader input = new BufferedReader(new FileReader("quotes.txt"))) {
 
             // stores quotes into the array list to be chosen
-            // reads in quotes of a specific person if username was
-            // given
+            // reads in quotes of a specific person if username was given
             // otherwise it will populate all quotes
             while ((quote = input.readLine()) != null) {
                 if (!user.isEmpty()) {
@@ -287,10 +281,8 @@ public class MessageEventListener {
                 chosenQuoteIndex = random.nextInt(maxRandomRange);
             }
 
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             e.printStackTrace();
-        } catch (IOException e1) {
-            e1.printStackTrace();
         }
 
         return quotesList.get(chosenQuoteIndex);
@@ -304,10 +296,7 @@ public class MessageEventListener {
         // open the quotes file
         try (BufferedReader input = new BufferedReader(new FileReader("queue.txt"))) {
 
-            // stores quotes into the array list to be chosen
-            // reads in quotes of a specific person if username was
-            // given
-            // otherwise it will populate all quotes
+            // stores the people in an array list 
             while ((fromFile = input.readLine()) != null) {
                 count++;
                 queue.add(Integer.toString(count) + ". " + fromFile + "\n");
