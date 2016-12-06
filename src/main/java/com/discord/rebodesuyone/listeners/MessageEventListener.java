@@ -76,13 +76,10 @@ public class MessageEventListener {
 
         try {
             dClient.getChannelByID(channelId).sendMessage("Bye Nyx");
-        } catch (MissingPermissionsException e) {
-            e.printStackTrace();
-        } catch (HTTP429Exception e) {
-            e.printStackTrace();
-        } catch (DiscordException e) {
+        } catch (MissingPermissionsException | HTTP429Exception | DiscordException e) {
             e.printStackTrace();
         }
+
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -109,17 +106,14 @@ public class MessageEventListener {
         // create the quote string to be saved
         String messageToSave = author.getName() + " - " + toBeQuoted.getContent();
 
-        try {
-            writeToFileHelper(messageToSave, "quotes.txt");
-            dClient.getChannelByID(channelId).sendMessage("Message Quoted");
+        writeToFileHelper(messageToSave, "quotes.txt");
 
-        } catch (MissingPermissionsException e) {
-            e.printStackTrace();
-        } catch (HTTP429Exception e) {
-            e.printStackTrace();
-        } catch (DiscordException e) {
+        try {
+            dClient.getChannelByID(channelId).sendMessage("Message Quoted");
+        } catch (MissingPermissionsException | HTTP429Exception | DiscordException e) {
             e.printStackTrace();
         }
+
     }
 
     // saves quotes manually
@@ -135,7 +129,6 @@ public class MessageEventListener {
         // if the message is equal to the desired command word, then execute
         if (messageSplit[0].equals("!quote")) {
             try {
-
                 // if the user wants to manually quote someone
                 // TODO: create a check against user list to check if actual
                 // user is given
@@ -176,12 +169,7 @@ public class MessageEventListener {
                 // "Wrong quote input - correct inputs = !quote | !quote
                 // username | !quote 1 | !quote username message");
                 // }
-
-            } catch (MissingPermissionsException e) {
-                e.printStackTrace();
-            } catch (HTTP429Exception e) {
-                e.printStackTrace();
-            } catch (DiscordException e) {
+            } catch (MissingPermissionsException | HTTP429Exception | DiscordException e) {
                 e.printStackTrace();
             }
         }
@@ -217,14 +205,10 @@ public class MessageEventListener {
     public void queuePersonCommand(IDiscordClient dClient, String username, String channelId) {
 
         // write to queue file
+        writeToFileHelper(username, "queue.txt");
         try {
-            writeToFileHelper(username, "queue.txt");
             dClient.getChannelByID(channelId).sendMessage(username + " was added to the queue.");
-        } catch (MissingPermissionsException e) {
-            e.printStackTrace();
-        } catch (HTTP429Exception e) {
-            e.printStackTrace();
-        } catch (DiscordException e) {
+        } catch (MissingPermissionsException | HTTP429Exception | DiscordException e) {
             e.printStackTrace();
         }
     }
@@ -238,19 +222,15 @@ public class MessageEventListener {
         List<String> queue = new ArrayList<String>();
         StringBuilder queueString = new StringBuilder();
         // open the quotes file
+        queue = getQueueFromFile();
+
+        for (String person : queue) {
+            queueString.append(person + "\n");
+        }
+
         try {
-            queue = getQueueFromFile();
-
-            for (String person : queue) {
-                queueString.append(person + "\n");
-            }
-
             dClient.getChannelByID(channelId).sendMessage(queueString.toString());
-        } catch (MissingPermissionsException e) {
-            e.printStackTrace();
-        } catch (HTTP429Exception e) {
-            e.printStackTrace();
-        } catch (DiscordException e) {
+        } catch (MissingPermissionsException | HTTP429Exception | DiscordException e) {
             e.printStackTrace();
         }
     }
@@ -336,10 +316,8 @@ public class MessageEventListener {
             // close the file
             input.close();
 
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             e.printStackTrace();
-        } catch (IOException e1) {
-            e1.printStackTrace();
         }
 
         return queue;
