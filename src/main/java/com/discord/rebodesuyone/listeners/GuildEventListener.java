@@ -1,10 +1,10 @@
 package com.discord.rebodesuyone.listeners;
 
-import sx.blah.discord.api.IListener;
+import sx.blah.discord.api.events.IListener;
 import sx.blah.discord.handle.impl.events.GuildCreateEvent;
 import sx.blah.discord.util.DiscordException;
-import sx.blah.discord.util.HTTP429Exception;
 import sx.blah.discord.util.MissingPermissionsException;
+import sx.blah.discord.util.RateLimitException;
 
 public class GuildEventListener implements IListener<GuildCreateEvent>{
 
@@ -15,16 +15,13 @@ public class GuildEventListener implements IListener<GuildCreateEvent>{
 	 */
 	@Override
 	public void handle(GuildCreateEvent event) {
-		try {
 			//general channel id: 173441141323071488
-			event.getClient().getChannelByID("173441141323071488").sendMessage("I'm awake");
-		} catch (MissingPermissionsException e) {
-			e.printStackTrace();
-		} catch (HTTP429Exception e) {
-			e.printStackTrace();
-		} catch (DiscordException e) {
-			e.printStackTrace();
-		}
+			try {
+                event.getClient().getChannelByID("173441141323071488").sendMessage("I'm awake");
+            } catch (MissingPermissionsException | RateLimitException | DiscordException e) {
+                e.printStackTrace();
+            }
+		
 		
 	}
 

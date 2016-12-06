@@ -11,22 +11,30 @@ import java.util.Random;
 
 import org.apache.commons.lang3.math.NumberUtils;
 
-import sx.blah.discord.api.EventSubscriber;
 import sx.blah.discord.api.IDiscordClient;
+import sx.blah.discord.api.events.EventSubscriber;
+import sx.blah.discord.api.events.IListener;
 import sx.blah.discord.handle.impl.events.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IMessage;
+import sx.blah.discord.handle.obj.IPrivateChannel;
 import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.util.DiscordException;
-import sx.blah.discord.util.HTTP429Exception;
+import sx.blah.discord.util.MessageBuilder;
 import sx.blah.discord.util.MessageList;
 import sx.blah.discord.util.MissingPermissionsException;
+import sx.blah.discord.util.RateLimitException;
 
 /*
  * Will have to eventually refactor this into a new command class to handle all the commands
  * 
  */
-public class MessageEventListener {
+public class MessageEventListener implements IListener<MessageReceivedEvent> {
+
+    @Override
+    public void handle(MessageReceivedEvent event) {
+
+    }
 
     // TODO write a help command that lists all readable permutations of
     // commands
@@ -64,8 +72,8 @@ public class MessageEventListener {
                 break;
             default:
                 try {
-                    client.getChannelByID(channelId).sendMessage("That is not a command!");
-                } catch (MissingPermissionsException | HTTP429Exception | DiscordException e) {
+                    new MessageBuilder(client).withChannel(channel).withContent("That is not a command!").build();
+                } catch (MissingPermissionsException | DiscordException | RateLimitException e) {
                     e.printStackTrace();
                 }
             }
@@ -75,8 +83,8 @@ public class MessageEventListener {
     public void testEvent(IDiscordClient dClient, String channelId) {
 
         try {
-            dClient.getChannelByID(channelId).sendMessage("Bye Nyx");
-        } catch (MissingPermissionsException | HTTP429Exception | DiscordException e) {
+            new MessageBuilder(dClient).withChannel(channelId).withContent("Bye Nyx").build();
+        } catch (RateLimitException | DiscordException | MissingPermissionsException e) {
             e.printStackTrace();
         }
 
@@ -108,8 +116,8 @@ public class MessageEventListener {
         writeToFileHelper(messageToSave, "quotes.txt");
 
         try {
-            dClient.getChannelByID(channelId).sendMessage("Message Quoted");
-        } catch (MissingPermissionsException | HTTP429Exception | DiscordException e) {
+            new MessageBuilder(dClient).withChannel(channelId).withContent("Quote saved").build();
+        } catch (MissingPermissionsException | DiscordException | RateLimitException e) {
             e.printStackTrace();
         }
 
@@ -137,7 +145,7 @@ public class MessageEventListener {
                     String messageToSave = user + " - \"" + toBeQuoted + "\"";
                     writeToFileHelper(messageToSave, "quotes.txt");
 
-                    dClient.getChannelByID(channelId).sendMessage("Quote Added");
+                    new MessageBuilder(dClient).withChannel(channelId).withContent("Quote Added").build();
 
                     // if the user gave a username or quote id
                 } else if (messageSplit.length == 2) {
@@ -153,12 +161,12 @@ public class MessageEventListener {
                     }
 
                     chosenQuote = getQuoteHelper(user, chosenQuoteIndex);
-                    dClient.getChannelByID(channelId).sendMessage(chosenQuote);
+                    new MessageBuilder(dClient).withChannel(channelId).withContent(chosenQuote);
 
                     // if the user didn't give any params
                 } else if (messageSplit.length == 1) {
                     chosenQuote = getQuoteHelper(user, chosenQuoteIndex);
-                    dClient.getChannelByID(channelId).sendMessage(chosenQuote);
+                    new MessageBuilder(dClient).withChannel(channelId).withContent(chosenQuote).build();
 
                 }
                 // else {
@@ -167,17 +175,38 @@ public class MessageEventListener {
                 // "Wrong quote input - correct inputs = !quote | !quote
                 // username | !quote 1 | !quote username message");
                 // }
-            } catch (MissingPermissionsException | HTTP429Exception | DiscordException e) {
+            } catch (MissingPermissionsException | DiscordException | RateLimitException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    // TODO this
     // read all quotes from file and send to user
     // send as a PM? <-- seems likely - less work lol
-    public void dumpQuotes(MessageReceivedEvent event) {
+    public void dumpQuotes(IDiscordClient dClient, IUser user) {
+        String quote;
+        int id = 0;
+        StringBuilder quotes = new StringBuilder();
+        try (BufferedReader input = new BufferedReader(new FileReader("quotes.txt"))) {
+            // stores quotes into the array list to be chosen
+            // reads in quotes of a specific person if username was given
+            // otherwise it will populate all quotes
+            while ((quote = input.readLine()) != null) {
+                quotes.append("Quote id: " + id++ + " - " + quote + "\n");
+            }
 
+            // close the file
+            input.close();
+
+            try {
+                IPrivateChannel pm = dClient.getOrCreatePMChannel(user);
+                new MessageBuilder(dClient).withChannel(pm.getID()).withQuote(quotes.toString()).build();
+            } catch (MissingPermissionsException | RateLimitException | DiscordException e) {
+                e.printStackTrace();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -203,8 +232,8 @@ public class MessageEventListener {
         // write to queue file
         writeToFileHelper(username, "queue.txt");
         try {
-            dClient.getChannelByID(channelId).sendMessage(username + " was added to the queue.");
-        } catch (MissingPermissionsException | HTTP429Exception | DiscordException e) {
+            new MessageBuilder(dClient).withChannel(channelId).withContent(username + " was added to the queue.").build();
+        } catch (MissingPermissionsException | DiscordException | RateLimitException e) {
             e.printStackTrace();
         }
     }
@@ -224,8 +253,8 @@ public class MessageEventListener {
         }
 
         try {
-            dClient.getChannelByID(channelId).sendMessage(queueString.toString());
-        } catch (MissingPermissionsException | HTTP429Exception | DiscordException e) {
+            new MessageBuilder(dClient).withChannel(channelId).withContent(queueString.toString()).build();
+        } catch (MissingPermissionsException | DiscordException | RateLimitException e) {
             e.printStackTrace();
         }
     }
@@ -238,7 +267,7 @@ public class MessageEventListener {
         // open the quotes file
         try (PrintWriter output = new PrintWriter(filename)) {
             // write the new quote in
-            output.println(messageToSave);
+            output.append(messageToSave);
 
             // close the file
             output.close();
@@ -296,7 +325,7 @@ public class MessageEventListener {
         // open the quotes file
         try (BufferedReader input = new BufferedReader(new FileReader("queue.txt"))) {
 
-            // stores the people in an array list 
+            // stores the people in an array list
             while ((fromFile = input.readLine()) != null) {
                 count++;
                 queue.add(Integer.toString(count) + ". " + fromFile + "\n");
