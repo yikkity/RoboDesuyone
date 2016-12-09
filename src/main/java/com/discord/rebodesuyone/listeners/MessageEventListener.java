@@ -29,18 +29,17 @@ public class MessageEventListener implements IListener<MessageReceivedEvent> {
 
     @Override
     public void handle(MessageReceivedEvent event) {
-
+        commandOperator(event);
     }
 
     // Operator method to handle all command inputs then calls the relevant
-    @EventSubscriber
+    //@EventSubscriber
     public void commandOperator(MessageReceivedEvent event) {
         IMessage message = event.getMessage();
         String channelId = message.getChannel().getID();
         IChannel channel = event.getClient().getChannelByID(channelId);
         IDiscordClient client = event.getClient();
         IUser user = message.getAuthor();
-        String username = user.getName();
 
         String messageContent = message.getContent();
         String[] messageSplit = messageContent.split(" ");
@@ -55,10 +54,10 @@ public class MessageEventListener implements IListener<MessageReceivedEvent> {
                 quotePreviousMessageCommand(client, channelId, channel);
                 break;
             case "!quote":
-                quoteCommand(client, messageSplit, channelId);
+                quoteCommand(client, messageSplit, channelId, user.getID());
                 break;
             case "!lineup":
-                queuePersonCommand(client, username, channelId);
+                queuePersonCommand(client, user.getName(), channelId);
                 break;
             case "!showqueue":
                 showQueueCommand(client, channelId);
@@ -120,8 +119,8 @@ public class MessageEventListener implements IListener<MessageReceivedEvent> {
     // gets a random quote from a specific user
     // gets a specific quote
     // gets a random quote
-    public void quoteCommand(IDiscordClient dClient, String[] messageSplit, String channelId) {
-        String user = "";
+    public void quoteCommand(IDiscordClient dClient, String[] messageSplit, String channelId, String userId) {
+        String username = "";
         String chosenQuote;
         int chosenQuoteIndex = -1;
 
@@ -132,13 +131,18 @@ public class MessageEventListener implements IListener<MessageReceivedEvent> {
                 // TODO: create a check against user list to check if actual
                 // user is given
                 if (messageSplit.length == 3) {
-                    user = messageSplit[1];
+                    username = messageSplit[1];
                     String toBeQuoted = messageSplit[2];
+                    
+                    //check if user exists in list of users
+                    if(existingUserCheck(dClient, userId) == true){
+                        String messageToSave = username + " - \"" + toBeQuoted + "\"";
+                        writeToFileHelper(messageToSave, "quotes.txt");
 
-                    String messageToSave = user + " - \"" + toBeQuoted + "\"";
-                    writeToFileHelper(messageToSave, "quotes.txt");
-
-                    new MessageBuilder(dClient).withChannel(channelId).withContent("Quote Added").build();
+                        new MessageBuilder(dClient).withChannel(channelId).withContent("Quote Added").build();
+                    } else {
+                        new MessageBuilder(dClient).withChannel(channelId).withContent("User doesn't exist").build();
+                    }
 
                     // if the user gave a username or quote id
                 } else if (messageSplit.length == 2) {
@@ -150,15 +154,15 @@ public class MessageEventListener implements IListener<MessageReceivedEvent> {
 
                         // if it wasn't a number
                     } else {
-                        user = messageSplit[1];
+                        username = messageSplit[1];
                     }
 
-                    chosenQuote = getQuoteHelper(user, chosenQuoteIndex);
+                    chosenQuote = getQuoteHelper(username, chosenQuoteIndex);
                     new MessageBuilder(dClient).withChannel(channelId).withContent(chosenQuote);
 
                     // if the user didn't give any params
                 } else if (messageSplit.length == 1) {
-                    chosenQuote = getQuoteHelper(user, chosenQuoteIndex);
+                    chosenQuote = getQuoteHelper(username, chosenQuoteIndex);
                     new MessageBuilder(dClient).withChannel(channelId).withContent(chosenQuote).build();
 
                 }
@@ -255,6 +259,16 @@ public class MessageEventListener implements IListener<MessageReceivedEvent> {
     // -----------------------------------------------------------------------------------------------------------------
 
     // Helper and Misc methods
+    
+    private boolean existingUserCheck(IDiscordClient dClient, String userId){
+        boolean exists = false;
+        IUser maybeAUser = dClient.getUserByID(userId);
+        if(!maybeAUser.equals(null)){
+            exists = true;
+        }
+        
+        return exists;
+    }
 
     private void writeToFileHelper(String messageToSave, String filename) {
         // open the quotes file
@@ -269,7 +283,6 @@ public class MessageEventListener implements IListener<MessageReceivedEvent> {
         }
     }
 
-    // TODO: write a user not found response
     private String getQuoteHelper(String user, int chosenQuoteIndex) {
         String quote;
         List<String> quotesList = new ArrayList<String>();
@@ -307,7 +320,14 @@ public class MessageEventListener implements IListener<MessageReceivedEvent> {
             e.printStackTrace();
         }
 
-        return quotesList.get(chosenQuoteIndex);
+        String result = "";
+        if(quotesList.isEmpty()){
+            result = "User does not have anything quoted.";
+        } else {
+            result = quotesList.get(chosenQuoteIndex);
+        }
+        
+        return result;
     }
 
     private List<String> getQueueFromFile() {
