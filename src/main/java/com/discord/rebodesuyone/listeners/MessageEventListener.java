@@ -135,7 +135,7 @@ public class MessageEventListener implements IListener<MessageReceivedEvent> {
                     String toBeQuoted = messageSplit[2];
                     
                     //check if user exists in list of users
-                    if(existingUserCheck(dClient, userId) == true){
+                    if(existingUserCheck(dClient, username) == true){
                         String messageToSave = username + " - \"" + toBeQuoted + "\"";
                         writeToFileHelper(messageToSave, "quotes.txt");
 
@@ -260,13 +260,14 @@ public class MessageEventListener implements IListener<MessageReceivedEvent> {
 
     // Helper and Misc methods
     
-    private boolean existingUserCheck(IDiscordClient dClient, String userId){
+    private boolean existingUserCheck(IDiscordClient dClient, String username){
         boolean exists = false;
-        IUser maybeAUser = dClient.getUserByID(userId);
-        if(!maybeAUser.equals(null)){
-            exists = true;
+        List<IUser> users = dClient.getUsers();
+        for(IUser user : users){
+            if(user.getName().equals(username)){
+                exists = true;
+            }
         }
-        
         return exists;
     }
 
