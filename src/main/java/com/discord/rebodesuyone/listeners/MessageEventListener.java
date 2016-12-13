@@ -33,7 +33,7 @@ public class MessageEventListener implements IListener<MessageReceivedEvent> {
     }
 
     // Operator method to handle all command inputs then calls the relevant
-    //@EventSubscriber
+    // @EventSubscriber
     public void commandOperator(MessageReceivedEvent event) {
         IMessage message = event.getMessage();
         String channelId = message.getChannel().getID();
@@ -133,9 +133,9 @@ public class MessageEventListener implements IListener<MessageReceivedEvent> {
                 if (messageSplit.length == 3) {
                     username = messageSplit[1];
                     String toBeQuoted = messageSplit[2];
-                    
-                    //check if user exists in list of users
-                    if(existingUserCheck(dClient, username) == true){
+
+                    // check if user exists in list of users
+                    if (existingUserCheck(dClient, username) == true) {
                         String messageToSave = username + " - \"" + toBeQuoted + "\"";
                         writeToFileHelper(messageToSave, "quotes.txt");
 
@@ -157,8 +157,15 @@ public class MessageEventListener implements IListener<MessageReceivedEvent> {
                         username = messageSplit[1];
                     }
 
-                    chosenQuote = getQuoteHelper(username, chosenQuoteIndex);
-                    new MessageBuilder(dClient).withChannel(channelId).withContent(chosenQuote);
+                    // check if the user exists in list of users
+                    // or if a quote index was given
+                    if (existingUserCheck(dClient, username) || chosenQuoteIndex != -1) {
+                        chosenQuote = getQuoteHelper(username, chosenQuoteIndex);
+                        new MessageBuilder(dClient).withChannel(channelId).withContent(chosenQuote);
+                    } else {
+                        new MessageBuilder(dClient).withChannel(channelId)
+                                .withContent("User doesn't exist of invalid quote id").build();
+                    }
 
                     // if the user didn't give any params
                 } else if (messageSplit.length == 1) {
@@ -229,7 +236,8 @@ public class MessageEventListener implements IListener<MessageReceivedEvent> {
         // write to queue file
         writeToFileHelper(username, "queue.txt");
         try {
-            new MessageBuilder(dClient).withChannel(channelId).withContent(username + " was added to the queue.").build();
+            new MessageBuilder(dClient).withChannel(channelId).withContent(username + " was added to the queue.")
+                    .build();
         } catch (MissingPermissionsException | DiscordException | RateLimitException e) {
             e.printStackTrace();
         }
@@ -259,12 +267,12 @@ public class MessageEventListener implements IListener<MessageReceivedEvent> {
     // -----------------------------------------------------------------------------------------------------------------
 
     // Helper and Misc methods
-    
-    private boolean existingUserCheck(IDiscordClient dClient, String username){
+
+    private boolean existingUserCheck(IDiscordClient dClient, String username) {
         boolean exists = false;
         List<IUser> users = dClient.getUsers();
-        for(IUser user : users){
-            if(user.getName().equals(username)){
+        for (IUser user : users) {
+            if (user.getName().equals(username)) {
                 exists = true;
             }
         }
@@ -322,12 +330,12 @@ public class MessageEventListener implements IListener<MessageReceivedEvent> {
         }
 
         String result = "";
-        if(quotesList.isEmpty()){
+        if (quotesList.isEmpty()) {
             result = "User does not have anything quoted.";
         } else {
             result = quotesList.get(chosenQuoteIndex);
         }
-        
+
         return result;
     }
 
