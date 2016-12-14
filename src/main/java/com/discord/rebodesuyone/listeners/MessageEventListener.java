@@ -12,7 +12,6 @@ import java.util.Random;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import sx.blah.discord.api.IDiscordClient;
-import sx.blah.discord.api.events.EventSubscriber;
 import sx.blah.discord.api.events.IListener;
 import sx.blah.discord.handle.impl.events.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.IChannel;
@@ -45,7 +44,7 @@ public class MessageEventListener implements IListener<MessageReceivedEvent> {
         String[] messageSplit = messageContent.split(" ");
 
         // makes sure that only messages with '!' as the first char gets checked
-        if (messageSplit[0].charAt(0) == '!') {
+        if (messageSplit[0].startsWith("!")) {
             switch (messageSplit[0]) {
             case "!test":
                 testEvent(client, channelId);
@@ -55,6 +54,9 @@ public class MessageEventListener implements IListener<MessageReceivedEvent> {
                 break;
             case "!quote":
                 quoteCommand(client, messageSplit, channelId, user.getID());
+                break;
+            case "!quoteDump":
+                dumpQuotes(client, user);
                 break;
             case "!lineup":
                 queuePersonCommand(client, user.getName(), channelId);
@@ -79,6 +81,14 @@ public class MessageEventListener implements IListener<MessageReceivedEvent> {
         } catch (RateLimitException | DiscordException | MissingPermissionsException e) {
             e.printStackTrace();
         }
+
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------
+
+    // Help command
+
+    public void helpCommand(IDiscordClient dClient, String userId) {
 
     }
 
@@ -124,69 +134,64 @@ public class MessageEventListener implements IListener<MessageReceivedEvent> {
         String chosenQuote;
         int chosenQuoteIndex = -1;
 
-        // if the message is equal to the desired command word, then execute
-        if (messageSplit[0].equals("!quote")) {
-            try {
-                // if the user wants to manually quote someone
-                // TODO: create a check against user list to check if actual
-                // user is given
-                if (messageSplit.length == 3) {
-                    username = messageSplit[1];
-                    String toBeQuoted = messageSplit[2];
+        try {
+            // if the user wants to manually quote someone
+            if (messageSplit.length == 3) {
+                username = messageSplit[1];
+                String toBeQuoted = messageSplit[2];
 
-                    // check if user exists in list of users
-                    if (existingUserCheck(dClient, username) == true) {
-                        String messageToSave = username + " - \"" + toBeQuoted + "\"";
-                        writeToFileHelper(messageToSave, "quotes.txt");
+                // check if user exists in list of users
+                if (existingUserCheck(dClient, username) == true) {
+                    String messageToSave = username + " - \"" + toBeQuoted + "\"";
+                    writeToFileHelper(messageToSave, "quotes.txt");
 
-                        new MessageBuilder(dClient).withChannel(channelId).withContent("Quote Added").build();
-                    } else {
-                        new MessageBuilder(dClient).withChannel(channelId).withContent("User doesn't exist").build();
-                    }
-
-                    // if the user gave a username or quote id
-                } else if (messageSplit.length == 2) {
-
-                    // check if the param is a numerical
-                    // should be the quoteid
-                    if (NumberUtils.isNumber(messageSplit[1])) {
-                        chosenQuoteIndex = Integer.valueOf(messageSplit[1]);
-
-                        // if it wasn't a number
-                    } else {
-                        username = messageSplit[1];
-                    }
-
-                    // check if the user exists in list of users
-                    // or if a quote index was given
-                    if (existingUserCheck(dClient, username) || chosenQuoteIndex != -1) {
-                        chosenQuote = getQuoteHelper(username, chosenQuoteIndex);
-                        new MessageBuilder(dClient).withChannel(channelId).withContent(chosenQuote);
-                    } else {
-                        new MessageBuilder(dClient).withChannel(channelId)
-                                .withContent("User doesn't exist of invalid quote id").build();
-                    }
-
-                    // if the user didn't give any params
-                } else if (messageSplit.length == 1) {
-                    chosenQuote = getQuoteHelper(username, chosenQuoteIndex);
-                    new MessageBuilder(dClient).withChannel(channelId).withContent(chosenQuote).build();
-
+                    new MessageBuilder(dClient).withChannel(channelId).withContent("Quote Added").build();
+                } else {
+                    new MessageBuilder(dClient).withChannel(channelId).withContent("User doesn't exist").build();
                 }
-                // else {
-                // TODO move this string to help command
-                // event.getClient().getChannelByID(message.getChannel().getID()).sendMessage(
-                // "Wrong quote input - correct inputs = !quote | !quote
-                // username | !quote 1 | !quote username message");
-                // }
-            } catch (MissingPermissionsException | DiscordException | RateLimitException e) {
-                e.printStackTrace();
+
+                // if the user gave a username or quote id
+            } else if (messageSplit.length == 2) {
+
+                // check if the param is a numerical
+                // should be the quoteid
+                if (NumberUtils.isNumber(messageSplit[1])) {
+                    chosenQuoteIndex = Integer.valueOf(messageSplit[1]);
+
+                    // if it wasn't a number
+                } else {
+                    username = messageSplit[1];
+                }
+
+                // check if the user exists in list of users
+                // or if a quote index was given
+                if (existingUserCheck(dClient, username) || chosenQuoteIndex != -1) {
+                    chosenQuote = getQuoteHelper(username, chosenQuoteIndex);
+                    new MessageBuilder(dClient).withChannel(channelId).withContent(chosenQuote);
+                } else {
+                    new MessageBuilder(dClient).withChannel(channelId)
+                            .withContent("User doesn't exist of invalid quote id").build();
+                }
+
+                // if the user didn't give any params
+            } else if (messageSplit.length == 1) {
+                chosenQuote = getQuoteHelper(username, chosenQuoteIndex);
+                new MessageBuilder(dClient).withChannel(channelId).withContent(chosenQuote).build();
+
             }
+            // else {
+            // TODO move this string to help command
+            // event.getClient().getChannelByID(message.getChannel().getID()).sendMessage(
+            // "Wrong quote input - correct inputs = !quote | !quote
+            // username | !quote 1 | !quote username message");
+            // }
+        } catch (MissingPermissionsException | DiscordException | RateLimitException e) {
+            e.printStackTrace();
         }
+
     }
 
-    // read all quotes from file and send to user
-    // send as a PM? <-- seems likely - less work lol
+    // read all quotes from file and send to user in a pm
     public void dumpQuotes(IDiscordClient dClient, IUser user) {
         String quote;
         int id = 0;
@@ -202,13 +207,15 @@ public class MessageEventListener implements IListener<MessageReceivedEvent> {
             // close the file
             input.close();
 
-            try {
-                IPrivateChannel pm = dClient.getOrCreatePMChannel(user);
-                new MessageBuilder(dClient).withChannel(pm.getID()).withQuote(quotes.toString()).build();
-            } catch (MissingPermissionsException | RateLimitException | DiscordException e) {
-                e.printStackTrace();
-            }
         } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // send the user a pm with the list of quotes
+        try {
+            IPrivateChannel pm = dClient.getOrCreatePMChannel(user);
+            new MessageBuilder(dClient).withChannel(pm.getID()).withQuote(quotes.toString()).build();
+        } catch (MissingPermissionsException | RateLimitException | DiscordException e) {
             e.printStackTrace();
         }
     }
