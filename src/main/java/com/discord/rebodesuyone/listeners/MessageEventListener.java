@@ -55,7 +55,7 @@ public class MessageEventListener implements IListener<MessageReceivedEvent> {
             case "!quote":
                 quoteCommand(client, messageSplit, channelId, user.getID());
                 break;
-            case "!quoteDump":
+            case "!quotedump":
                 dumpQuotes(client, user);
                 break;
             case "!lineup":
@@ -88,8 +88,25 @@ public class MessageEventListener implements IListener<MessageReceivedEvent> {
 
     // Help command
 
-    public void helpCommand(IDiscordClient dClient, String userId) {
+    public void helpCommand(IDiscordClient dClient, IUser user) {
 
+        // build a message to send to the user in a pm
+        StringBuilder helpMessage = new StringBuilder();
+        helpMessage.append(
+                "!quotethat - grabs the previous message and saves it as a quote under the user who said it. \n");
+        helpMessage.append("!quote username - grabs a random quote under given username. \n");
+        helpMessage.append("!quote # - grabs a quote that has that id #. \n");
+        helpMessage.append("!quote username message - saves the message as a quote under the username given. \n");
+        helpMessage.append("!quotedump - sends all saved quotes in a pm to whoever uses this command. \n");
+        helpMessage.append("!lineup - adds the user who used this command to a queue. \n");
+        helpMessage.append("!showqueue - writes the current queue into the chat the command was used in. \n");
+
+        try {
+            IPrivateChannel pm = dClient.getOrCreatePMChannel(user);
+            new MessageBuilder(dClient).withChannel(pm.getID()).withQuote(helpMessage.toString()).build();
+        } catch (DiscordException | RateLimitException | MissingPermissionsException e) {
+            e.printStackTrace();
+        }
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -179,12 +196,6 @@ public class MessageEventListener implements IListener<MessageReceivedEvent> {
                 new MessageBuilder(dClient).withChannel(channelId).withContent(chosenQuote).build();
 
             }
-            // else {
-            // TODO move this string to help command
-            // event.getClient().getChannelByID(message.getChannel().getID()).sendMessage(
-            // "Wrong quote input - correct inputs = !quote | !quote
-            // username | !quote 1 | !quote username message");
-            // }
         } catch (MissingPermissionsException | DiscordException | RateLimitException e) {
             e.printStackTrace();
         }
